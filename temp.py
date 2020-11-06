@@ -23,7 +23,10 @@ def gen_position_display(acc: str,pos: dict) -> str:
     symbol = pos['symbol'];
     start_investment = round(pos['totalCost'], 2);
     current_val = round(pos['currentMarketValue'], 2);
-    day_pnl = round(pos['dayPnl'], 2);
+    try:
+        day_pnl = round(pos['dayPnl'], 2);
+    except:
+        day_pnl = 0.00;
     overall_pnl = round(pos['openPnl'], 2);
     # Calculate start val with pulled vals.
     start_val = round(current_val - day_pnl, 2);
