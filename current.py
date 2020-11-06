@@ -40,7 +40,7 @@ def gen_position_display(acc: str,pos: dict) -> str:
         day_fnt = 3;
     else:
         day_fnt = 4;
-        day_pnl_perc = day_pnl_perc[1:];
+        day_pnl_perc *= -1;
     # Gen the overall percent font colour.
     if overall_pnl_perc >= 0 and overall_pnl_perc < 1:
         overall_fnt = 5
@@ -48,7 +48,7 @@ def gen_position_display(acc: str,pos: dict) -> str:
         overall_fnt = 3;
     else:
         overall_fnt = 4;
-        overall_pnl_perc = overall_pnl_perc[1:];
+        overall_pnl_perc *= -1;
     result = '{F2}';
     result += symbol;
     result += '{F1}: $';
