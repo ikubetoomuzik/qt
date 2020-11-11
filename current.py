@@ -5,7 +5,7 @@ from functools import reduce;
 from os import getenv;
 
 # Set your personal SPACING option.
-SPACING = '{F2} |  {/F}'
+SPACING = '{F2}    {/F}'
 
 def get_cash_info(qt: Questrade, acct: int) -> str:
     bal_response = qt._send_message('get', 'accounts/' + str(acct) + '/balances')
@@ -78,16 +78,26 @@ def gen_string():
     access_info = getenv('HOME') + '/.config/questrade/access_token.yml';
     # Start the link using loaded conf.
     qt = Questrade(token_yaml=access_info);
-    # Make sure our token is up to date and wont expire.
-    qt.refresh_access_token();
-    qt.save_token_to_yaml(yaml_path=access_info);
-    # Only have one account so we grab first entry.
-    acct = qt.get_account_id()[0];
-    # Get the info for all positions held.
-    positions = get_position_info(qt, acct);
-    cash = get_cash_info(qt, acct);
+    # we try up to three times to make requests.
+    for _ in range(3):
+        try:
+            # Only have one account so we grab first entry.
+            acct = qt.get_account_id()[0];
+            # Get the info for all positions held.
+            positions = get_position_info(qt, acct);
+            # Get the specific cash balance info.
+            cash = get_cash_info(qt, acct);
+            break;
+        except:
+            # If the initial request fails then we refresh and try again.
+            qt.refresh_access_token();
+            # Save our newly generated token for next time.
+            qt.save_token_to_yaml(yaml_path=access_info);
+            continue;
+    # then we print the result
     print(positions + cash, end = '');
 
+# generate the output
 gen_string();
 
 # vim:ft=python
