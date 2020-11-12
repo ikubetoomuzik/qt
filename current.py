@@ -3,6 +3,8 @@
 from qtrade import Questrade;
 from functools import reduce;
 from os import getenv;
+import multiprocessing;
+import time;
 
 # Set your personal SPACING option.
 SPACING = '{F2}    {/F}'
@@ -98,6 +100,18 @@ def gen_string():
     print(positions + cash, end = '');
 
 # generate the output
-gen_string();
+# we are using multiprocessing to limit the request to 5 seconds.
+process = multiprocessing.Process(target=gen_string);
+# start running the process.
+process.start();
+# wait for 5 seconds or however long the process takes to finish.
+process.join(5);
+# check if the process is still running.
+if process.is_alive():
+    # now we kill it.
+    process.kill();
+    # and then just wait to finish.
+    process.join();
+
 
 # vim:ft=python
