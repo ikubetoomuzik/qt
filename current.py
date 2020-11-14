@@ -73,7 +73,7 @@ def gen_position_display(acc: str,pos: dict) -> str:
 
 def get_position_info(qt: Questrade, acct: int) -> str:
     positions = qt.get_account_positions(account_id=acct);
-    return reduce(gen_position_display, positions, '  ');
+    return reduce(gen_position_display, positions, '  ');
 
 def gen_string():
     # Defining the token location.
