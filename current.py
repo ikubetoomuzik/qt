@@ -11,6 +11,8 @@ SPACING = '{F2}    {/F}'
 
 def get_cash_info(qt: Questrade, acct: int) -> str:
     bal_response = qt._send_message('get', 'accounts/' + str(acct) + '/balances')
+    temp = qt._send_message('get', 'accounts/' + str(acct) + '/positions')
+    print(temp);
     try:
         cash = round(bal_response['perCurrencyBalances'][0]['cash'], 2);
     except Exception:
@@ -73,6 +75,7 @@ def gen_position_display(acc: str,pos: dict) -> str:
 
 def get_position_info(qt: Questrade, acct: int) -> str:
     positions = qt.get_account_positions(account_id=acct);
+    print(positions);
     return reduce(gen_position_display, positions, '  ');
 
 def gen_string():

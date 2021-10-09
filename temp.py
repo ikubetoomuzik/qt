@@ -3,35 +3,52 @@
 from qtrade import Questrade;
 from functools import reduce;
 from os import getenv;
+from os import path;
 import multiprocessing;
 import time;
+import csv;
+import datetime;
 
 # Set your personal SPACING option.
-SPACING = '{F2}    {/F}'
+SPACING = getenv('QT_SPACING', default='{F2}    {/F}');
+# Set the output CSV file.
+POS_OUTPUT = getenv('QT_POSITION_OUTPUT', default='/home/curtis/notes/programming/python/qt/positions.csv');
+CASH_OUTPUT = getenv('QT_CASH_OUTPUT', default='/home/curtis/notes/programming/python/qt/cash.csv');
+
+def out_csv_with_timestamp(file, list):
+    now = datetime.datetime.utcnow().isoformat()
+    for item in list:
+        item.update({"timestamp": now});
+    exists = path.isfile(file);
+    with open(file, 'a+', newline='') as of:
+        fc = csv.DictWriter(of, fieldnames=list[0].keys());
+        if not exists:
+            fc.writeheader();
+        fc.writerows(list);
 
 def get_cash_info(qt: Questrade, acct: int) -> str:
     bal_response = qt._send_message('get', 'accounts/' + str(acct) + '/balances')
+    out_csv_with_timestamp(CASH_OUTPUT, bal_response['perCurrencyBalances'].copy());
+    # temp = qt._send_message('get', 'accounts/' + str(acct) + '/positions')
+    # print(temp);
     try:
         cash = round(bal_response['perCurrencyBalances'][0]['cash'], 2);
     except Exception:
         raise Exception;
-    result = '{F2}Cash{F1}: $';
-    result += '{:.2f}'.format(cash);
-    result += '{/F}'
-    return result;
+    return F"{{F2}}Cash{{F1}}: ${cash:.2f}{{/F}}";
 
 def gen_position_display(acc: str,pos: dict) -> str:
     # Pull the basic values out of position dict.
     symbol = pos['symbol'];
-    start_investment = round(pos['totalCost'], 2);
+    start_investment = pos['totalCost'];
     current_val = round(pos['currentMarketValue'], 2);
     try:
-        day_pnl = round(pos['dayPnl'], 2);
+        day_pnl = pos['dayPnl'];
     except:
         day_pnl = 0.00;
-    overall_pnl = round(pos['openPnl'], 2);
+    overall_pnl = pos['openPnl'];
     # Calculate start val with pulled vals.
-    start_val = round(current_val - day_pnl, 2);
+    start_val = current_val - day_pnl;
     # Gen the percent values.
     day_pnl_perc = round(day_pnl / start_val * 100, 2);
     overall_pnl_perc = round(overall_pnl / start_investment * 100, 2);
@@ -51,28 +68,12 @@ def gen_position_display(acc: str,pos: dict) -> str:
     else:
         overall_fnt = 4;
         overall_pnl_perc *= -1;
-    result = '{F2}';
-    result += symbol;
-    result += '{F1}: $';
-    result += '{:.2f}'.format(current_val);
-    result += SPACING;
-    result +='{F';
-    result += str(day_fnt);
-    result += '}';
-    result += '{:.2f}'.format(day_pnl_perc);
-    result += '%';
-    result += SPACING;
-    result += '{F';
-    result += str(overall_fnt);
-    result += '}';
-    result += '{:.2f}'.format(overall_pnl_perc);
-    result += '%';
-    result += SPACING;
-    return acc + result;
+    return acc + f'{{F2}}{symbol}{{F1}}: ${current_val:.2f}{SPACING}{{F{day_fnt}}}{day_pnl_perc:.2f}%{SPACING}{{F{overall_fnt}}}{overall_pnl_perc:.2f}%{SPACING}';
 
 
 def get_position_info(qt: Questrade, acct: int) -> str:
     positions = qt.get_account_positions(account_id=acct);
+    out_csv_with_timestamp(POS_OUTPUT, positions.copy());
     return reduce(gen_position_display, positions, '  ');
 
 def gen_string():
